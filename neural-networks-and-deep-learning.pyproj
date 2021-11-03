@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{04eddc2a-53bb-47e0-84eb-18e5c9462e5f}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile />
+    <SearchPath>src\;data\;fig\</SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>Global|PythonCore|2.7</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include=".git\config" />
+    <Content Include=".git\description" />
+    <Content Include=".git\FETCH_HEAD" />
+    <Content Include=".git\HEAD" />
+    <Content Include=".git\hooks\applypatch-msg.sample" />
+    <Content Include=".git\hooks\commit-msg.sample" />
+    <Content Include=".git\hooks\fsmonitor-watchman.sample" />
+    <Content Include=".git\hooks\post-update.sample" />
+    <Content Include=".git\hooks\pre-applypatch.sample" />
+    <Content Include=".git\hooks\pre-commit.sample" />
+    <Content Include=".git\hooks\pre-merge-commit.sample" />
+    <Content Include=".git\hooks\pre-push.sample" />
+    <Content Include=".git\hooks\pre-rebase.sample" />
+    <Content Include=".git\hooks\pre-receive.sample" />
+    <Content Include=".git\hooks\prepare-commit-msg.sample" />
+    <Content Include=".git\hooks\update.sample" />
+    <Content Include=".git\index" />
+    <Content Include=".git\info\exclude" />
+    <Content Include=".git\logs\HEAD" />
+    <Content Include=".git\logs\refs\heads\master" />
+    <Content Include=".git\logs\refs\remotes\origin\HEAD" />
+    <Content Include=".git\logs\refs\remotes\upstream\development" />
+    <Content Include=".git\logs\refs\remotes\upstream\experimental" />
+    <Content Include=".git\logs\refs\remotes\upstream\master" />
+    <Content Include=".git\ms-persist.xml" />
+    <Content Include=".git\objects\pack\pack-2081aebf384005ddfdd5dae694f6f0a49e376ccb.idx" />
+    <Content Include=".git\objects\pack\pack-2081aebf384005ddfdd5dae694f6f0a49e376ccb.pack" />
+    <Content Include=".git\packed-refs" />
+    <Content Include=".git\refs\heads\master" />
+    <Content Include=".git\refs\remotes\origin\HEAD" />
+    <Content Include=".git\refs\remotes\upstream\development" />
+    <Content Include=".git\refs\remotes\upstream\experimental" />
+    <Content Include=".git\refs\remotes\upstream\master" />
+    <Content Include="data\mnist.pkl.gz" />
+    <Content Include="fig\backprop_magnitude_nabla.png" />
+    <Content Include="fig\data_1000.json" />
+    <Content Include="fig\digits.png" />
+    <Content Include="fig\digits_separate.png" />
+    <Content Include="fig\false_minima.png" />
+    <Content Include="fig\initial_gradient.json" />
+    <Content Include="fig\misleading_gradient.png" />
+    <Content Include="fig\misleading_gradient_contours.png" />
+    <Content Include="fig\mnist_100_digits.png" />
+    <Content Include="fig\mnist_2_and_1.png" />
+    <Content Include="fig\mnist_complete_zero.png" />
+    <Content Include="fig\mnist_first_digit.png" />
+    <Content Include="fig\mnist_other_features.png" />
+    <Content Include="fig\mnist_really_bad_images.png" />
+    <Content Include="fig\mnist_top_left_feature.png" />
+    <Content Include="fig\more_data.json" />
+    <Content Include="fig\more_data.png" />
+    <Content Include="fig\more_data_5.png" />
+    <Content Include="fig\more_data_comparison.png" />
+    <Content Include="fig\more_data_log.png" />
+    <Content Include="fig\more_data_rotated_5.png" />
+    <Content Include="fig\more_data_svm.json" />
+    <Content Include="fig\multiple_eta.json" />
+    <Content Include="fig\multiple_eta.png" />
+    <Content Include="fig\norms_during_training_2_layers.json" />
+    <Content Include="fig\norms_during_training_3_layers.json" />
+    <Content Include="fig\norms_during_training_4_layers.json" />
+    <Content Include="fig\overfitting.json" />
+    <Content Include="fig\overfitting1.png" />
+    <Content Include="fig\overfitting2.png" />
+    <Content Include="fig\overfitting3.png" />
+    <Content Include="fig\overfitting4.png" />
+    <Content Include="fig\overfitting_full.json" />
+    <Content Include="fig\overfitting_full.png" />
+    <Content Include="fig\pca_hard_data.png" />
+    <Content Include="fig\pca_hard_data_fit.png" />
+    <Content Include="fig\regularized.json" />
+    <Content Include="fig\regularized1.png" />
+    <Content Include="fig\regularized2.png" />
+    <Content Include="fig\regularized_full.json" />
+    <Content Include="fig\regularized_full.png" />
+    <Content Include="fig\replaced_by_d3\README.md" />
+    <Content Include="fig\replaced_by_d3\relu.png" />
+    <Content Include="fig\replaced_by_d3\sigmoid.png" />
+    <Content Include="fig\replaced_by_d3\step.png" />
+    <Content Include="fig\replaced_by_d3\tanh.png" />
+    <Content Include="fig\test.png" />
+    <Content Include="fig\training_speed_2_layers.png" />
+    <Content Include="fig\training_speed_3_layers.png" />
+    <Content Include="fig\training_speed_4_layers.png" />
+    <Content Include="fig\valley.png" />
+    <Content Include="fig\valley2.png" />
+    <Content Include="fig\weight_initialization_100.json" />
+    <Content Include="fig\weight_initialization_100.png" />
+    <Content Include="fig\weight_initialization_30.json" />
+    <Content Include="fig\weight_initialization_30.png" />
+    <Content Include="neural-networks-and-deep-learning.pyproj" />
+    <Content Include="README.md" />
+    <Content Include="requirements.txt" />
+    <Content Include="src\mnist_loader.pyc" />
+    <Content Include="src\network.pyc" />
+    <Content Include="src\network2.pyc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="fig\backprop_magnitude_nabla.py" />
+    <Compile Include="fig\false_minima.py" />
+    <Compile Include="fig\generate_gradient.py" />
+    <Compile Include="fig\misleading_gradient.py" />
+    <Compile Include="fig\misleading_gradient_contours.py" />
+    <Compile Include="fig\mnist.py" />
+    <Compile Include="fig\more_data.py" />
+    <Compile Include="fig\multiple_eta.py" />
+    <Compile Include="fig\overfitting.py" />
+    <Compile Include="fig\pca_limitations.py" />
+    <Compile Include="fig\replaced_by_d3\relu.py" />
+    <Compile Include="fig\replaced_by_d3\sigmoid.py" />
+    <Compile Include="fig\replaced_by_d3\step.py" />
+    <Compile Include="fig\replaced_by_d3\tanh.py" />
+    <Compile Include="fig\serialize_images_to_json.py" />
+    <Compile Include="fig\valley.py" />
+    <Compile Include="fig\valley2.py" />
+    <Compile Include="fig\weight_initialization.py" />
+    <Compile Include="src\conv.py" />
+    <Compile Include="src\expand_mnist.py" />
+    <Compile Include="src\mnist_average_darkness.py" />
+    <Compile Include="src\mnist_loader.py" />
+    <Compile Include="src\mnist_svm.py" />
+    <Compile Include="src\network.py" />
+    <Compile Include="src\network2.py" />
+    <Compile Include="src\network3.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include=".git" />
+    <Folder Include=".git\hooks" />
+    <Folder Include=".git\info" />
+    <Folder Include=".git\logs" />
+    <Folder Include=".git\logs\refs\" />
+    <Folder Include=".git\logs\refs\heads" />
+    <Folder Include=".git\logs\refs\remotes\" />
+    <Folder Include=".git\logs\refs\remotes\origin" />
+    <Folder Include=".git\logs\refs\remotes\upstream" />
+    <Folder Include=".git\objects\" />
+    <Folder Include=".git\objects\pack" />
+    <Folder Include=".git\refs\" />
+    <Folder Include=".git\refs\heads" />
+    <Folder Include=".git\refs\remotes\" />
+    <Folder Include=".git\refs\remotes\origin" />
+    <Folder Include=".git\refs\remotes\upstream" />
+    <Folder Include="data" />
+    <Folder Include="fig" />
+    <Folder Include="fig\replaced_by_d3" />
+    <Folder Include="src" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|PythonCore|2.7" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
