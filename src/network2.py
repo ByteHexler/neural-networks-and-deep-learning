@@ -126,7 +126,7 @@ class Network(object):
             a = sigmoid(np.dot(w, a)+b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta,
+    def SGD(self, training_data, epochs, mini_batch_size, eta, stop_n=0,
             lmbda = 0.0,
             evaluation_data=None,
             monitor_evaluation_cost=False,
@@ -183,7 +183,9 @@ class Network(object):
                 evaluation_accuracy.append(accuracy)
                 print "Accuracy on evaluation data: {} / {}".format(
                     self.accuracy(evaluation_data), n_data)
-            print
+                if stop_n and j>=stop_n:
+                    if evaluation_accuracy[-stop_n-1]>max(evaluation_accuracy[-stop_n:]): break
+        print
         return evaluation_cost, evaluation_accuracy, \
             training_cost, training_accuracy
 
