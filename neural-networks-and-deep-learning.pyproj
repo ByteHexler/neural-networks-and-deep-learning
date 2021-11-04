@@ -114,9 +114,6 @@
     <Content Include="neural-networks-and-deep-learning.pyproj" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
-    <Content Include="src\mnist_loader.pyc" />
-    <Content Include="src\network.pyc" />
-    <Content Include="src\network2.pyc" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="fig\backprop_magnitude_nabla.py" />
