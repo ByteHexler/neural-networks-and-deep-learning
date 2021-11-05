@@ -16,6 +16,7 @@ features.
 import json
 import random
 import sys
+import math as m
 
 # Third-party libraries
 import numpy as np
@@ -126,11 +127,15 @@ class Network(object):
             a = sigmoid(np.dot(w, a)+b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta, stop_n=0,
+    def SGD(self, training_data, epochs, mini_batch_size, eta,
             lmbda = 0.0,
             evaluation_data=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
+            stop_n=0,
+            stop_delta=0.0,
+            learning_schedule=0,
+            eta_divider=1024,
             monitor_training_cost=False,
             monitor_training_accuracy=False):
         """Train the neural network using mini-batch stochastic gradient
@@ -156,6 +161,7 @@ class Network(object):
         n = len(training_data)
         evaluation_cost, evaluation_accuracy = [], []
         training_cost, training_accuracy = [], []
+        learning_schedule_iteration=0
         for j in xrange(epochs):
             random.shuffle(training_data)
             mini_batches = [
@@ -184,9 +190,15 @@ class Network(object):
                 print "Accuracy on evaluation data: {} / {}".format(
                     self.accuracy(evaluation_data), n_data)
                 if stop_n and j>=stop_n:
-                    if evaluation_accuracy[-stop_n-1]>max(evaluation_accuracy[-stop_n:]): break
+                    if evaluation_accuracy[-stop_n-1]>max(evaluation_accuracy[-stop_n:]): 
+                        if learning_schedule==0 or learning_schedule**learning_schedule_iteration>eta_divider: break
+                        else:
+                            eta=eta/learning_schedule
+                            learning_schedule_iteration+=1
+                if stop_delta and j>0:
+                    if max(evaluation_accuracy[:-1])>(1+m.exp(-m.sqrt(j)/stop_delta))*evaluation_accuracy[-1]: break
         print
-        return evaluation_cost, evaluation_accuracy, \
+        return evaluation_cost, evaluation_accuracy, max(evaluation_accuracy), \
             training_cost, training_accuracy
 
     def update_mini_batch(self, mini_batch, eta, lmbda, n):
