@@ -98,8 +98,10 @@ class Network(object):
 
         """
         self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
+        self.b_momentums= [np.zeros(b.shape) for b in self.biases]
         self.weights = [np.random.randn(y, x)/np.sqrt(x)
                         for x, y in zip(self.sizes[:-1], self.sizes[1:])]
+        self.w_momentums = [np.zeros(w.shape) for w in self.weights]
 
     def large_weight_initializer(self):
         """Initialize the weights using a Gaussian distribution with mean 0
@@ -118,8 +120,10 @@ class Network(object):
 
         """
         self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
+        self.b_momentums= [np.zeros(b.shape) for b in self.biases]
         self.weights = [np.random.randn(y, x)
                         for x, y in zip(self.sizes[:-1], self.sizes[1:])]
+        self.w_momentums = [np.zeros(w.shape) for w in self.weights]
 
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
@@ -129,6 +133,7 @@ class Network(object):
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
             lmbda = 0.0,
+            vel_cof=0.0,
             evaluation_data=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
@@ -169,7 +174,7 @@ class Network(object):
                 for k in xrange(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(
-                    mini_batch, eta, lmbda, len(training_data))
+                    mini_batch, eta, lmbda, len(training_data), vel_cof)
             print "Epoch %s training complete" % j
             if monitor_training_cost:
                 cost = self.total_cost(training_data, lmbda)
@@ -201,7 +206,7 @@ class Network(object):
         return evaluation_cost, evaluation_accuracy, max(evaluation_accuracy), \
             training_cost, training_accuracy
 
-    def update_mini_batch(self, mini_batch, eta, lmbda, n):
+    def update_mini_batch(self, mini_batch, eta, lmbda, n, vel_cof):
         """Update the network's weights and biases by applying gradient
         descent using backpropagation to a single mini batch.  The
         ``mini_batch`` is a list of tuples ``(x, y)``, ``eta`` is the
@@ -215,10 +220,14 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [(1-eta*(lmbda/n))*w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]
+        
+        self.w_momentums = [vel_cof*wm-(eta/len(mini_batch))*nw
+                           for wm, nw in zip(self.w_momentums, nabla_w)]
+        self.weights = [(1-eta*(lmbda/n))*w + wm
+                       for w, wm in zip(self.weights, self.w_momentums)]
+        self.b_momentums = [vel_cof*bm-(eta/len(mini_batch))*nb
+                           for bm, nb in zip(self.b_momentums, nabla_b)]
+        self.biases = [b+bm for b, bm in zip(self.biases, self.b_momentums)]
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
