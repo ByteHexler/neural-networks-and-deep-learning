@@ -272,7 +272,17 @@ class Network(object):
             active_neurons.append(rand_bin_array(i,p[1]))
         active_neurons.append(np.ones(self.sizes[-1]))
         new_weights = [w*an for w, an in zip(self.weights, active_neurons[:-1])]
-        new_biases = [b*an for b, an in zip(self.biases, active_neurons[1:])]
+        new_biases = [b*np.array([an]).T for b, an in zip(self.biases, active_neurons[1:])]
+        #print('active neurons:')
+        #print(active_neurons)
+        #print('original weights:')
+        #print(self.weights)
+        #print('new weights:')
+        #print(new_weights)
+        #print('original biases:')
+        #print(self.biases)
+        #print('new biases:')
+        #print(new_biases)
         return new_weights, new_biases
 
     def accuracy(self, data, convert=False):
