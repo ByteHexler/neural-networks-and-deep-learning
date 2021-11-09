@@ -17,6 +17,7 @@ import json
 import random
 import sys
 import math as m
+import decimal
 
 # Third-party libraries
 import numpy as np
@@ -133,6 +134,7 @@ class Network(object):
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
             lmbda = 0.0,
+            p = [1.0, 1.0],
             vel_cof=0.0,
             evaluation_data=None,
             monitor_evaluation_cost=False,
@@ -174,7 +176,7 @@ class Network(object):
                 for k in xrange(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(
-                    mini_batch, eta, lmbda, len(training_data), vel_cof)
+                    mini_batch, eta, lmbda, len(training_data), vel_cof, p)
             print "Epoch %s training complete" % j
             if monitor_training_cost:
                 cost = self.total_cost(training_data, lmbda)
@@ -206,7 +208,7 @@ class Network(object):
         return evaluation_cost, evaluation_accuracy, max(evaluation_accuracy), \
             training_cost, training_accuracy
 
-    def update_mini_batch(self, mini_batch, eta, lmbda, n, vel_cof):
+    def update_mini_batch(self, mini_batch, eta, lmbda, n, vel_cof, p):
         """Update the network's weights and biases by applying gradient
         descent using backpropagation to a single mini batch.  The
         ``mini_batch`` is a list of tuples ``(x, y)``, ``eta`` is the
@@ -216,8 +218,9 @@ class Network(object):
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
+        sel_weights, sel_biases = self.dropout(p)
         for x, y in mini_batch:
-            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+            delta_nabla_b, delta_nabla_w = self.backprop(x, y, sel_weights, sel_biases)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
         
@@ -229,7 +232,7 @@ class Network(object):
                            for bm, nb in zip(self.b_momentums, nabla_b)]
         self.biases = [b+bm for b, bm in zip(self.biases, self.b_momentums)]
 
-    def backprop(self, x, y):
+    def backprop(self, x, y, sel_weights, sel_biases):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
         gradient for the cost function C_x.  ``nabla_b`` and
         ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
@@ -240,7 +243,7 @@ class Network(object):
         activation = x
         activations = [x] # list to store all the activations, layer by layer
         zs = [] # list to store all the z vectors, layer by layer
-        for b, w in zip(self.biases, self.weights):
+        for b, w in zip(sel_biases, sel_weights):
             z = np.dot(w, activation)+b
             zs.append(z)
             activation = sigmoid(z)
@@ -258,10 +261,19 @@ class Network(object):
         for l in xrange(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)
-            delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+            delta = np.dot(sel_weights[-l+1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
+
+    def dropout(self, p):
+        active_neurons = [rand_bin_array(self.sizes[0],p[0])]
+        for i in self.sizes[1:-1]:
+            active_neurons.append(rand_bin_array(i,p[1]))
+        active_neurons.append(np.ones(self.sizes[-1]))
+        new_weights = [w*an for w, an in zip(self.weights, active_neurons[:-1])]
+        new_biases = [b*an for b, an in zip(self.biases, active_neurons[1:])]
+        return new_weights, new_biases
 
     def accuracy(self, data, convert=False):
         """Return the number of inputs in ``data`` for which the neural
@@ -353,3 +365,10 @@ def sigmoid(z):
 def sigmoid_prime(z):
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))
+
+def rand_bin_array(N, p):
+    K = int(decimal.Decimal(str(N*p)).quantize(decimal.Decimal('0'), decimal.ROUND_HALF_EVEN))
+    arr = np.zeros(N)
+    arr[:K]  = 1   
+    np.random.shuffle(arr)
+    return arr
