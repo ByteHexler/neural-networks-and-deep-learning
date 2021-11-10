@@ -22,6 +22,25 @@ import decimal
 # Third-party libraries
 import numpy as np
 
+"""
+training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
+
+net = network2.Network([784,30,10])
+
+net.SGD(training_data, 30, 10, 0.5,
+        lmbda = 5.0,
+        p = [1.0, 1.0],
+        vel_cof=0.0,
+        evaluation_data=validation_data,
+        monitor_evaluation_cost=False,
+        monitor_evaluation_accuracy=True,
+        stop_n=0,
+        stop_delta=0.0,
+        learning_schedule=0,
+        eta_divider=1024,
+        monitor_training_cost=False,
+        monitor_training_accuracy=False)
+"""
 
 #### Define the quadratic and cross-entropy cost functions
 
@@ -218,9 +237,9 @@ class Network(object):
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
-        sel_weights, sel_biases = self.dropout(p)
+        active_neurons = self.dropout(p)
         for x, y in mini_batch:
-            delta_nabla_b, delta_nabla_w = self.backprop(x, y, sel_weights, sel_biases)
+            delta_nabla_b, delta_nabla_w = self.backprop(x, y, active_neurons)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
         
@@ -232,7 +251,7 @@ class Network(object):
                            for bm, nb in zip(self.b_momentums, nabla_b)]
         self.biases = [b+bm for b, bm in zip(self.biases, self.b_momentums)]
 
-    def backprop(self, x, y, sel_weights, sel_biases):
+    def backprop(self, x, y, active_neurons):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
         gradient for the cost function C_x.  ``nabla_b`` and
         ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
@@ -240,13 +259,20 @@ class Network(object):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
-        activation = x
-        activations = [x] # list to store all the activations, layer by layer
+        #print(active_neurons[0])
+        activation = x*active_neurons[0]
+        #print(x.shape==activation.shape)
+        #input='0'
+        #while input=='0': input=raw_input("1 zum fortfahren!")
+        activations = [activation] # list to store all the activations, layer by layer
         zs = [] # list to store all the z vectors, layer by layer
-        for b, w in zip(sel_biases, sel_weights):
+        for b, w, an in zip(self.biases, self.weights, active_neurons[1:]):
             z = np.dot(w, activation)+b
             zs.append(z)
-            activation = sigmoid(z)
+            activation = sigmoid(z)*an
+            #print(sigmoid(z).shape==activation.shape)
+            #input='0'
+            #while input=='0': input=raw_input("1 zum fortfahren!")
             activations.append(activation)
         # backward pass
         delta = (self.cost).delta(zs[-1], activations[-1], y)
@@ -261,7 +287,7 @@ class Network(object):
         for l in xrange(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)
-            delta = np.dot(sel_weights[-l+1].transpose(), delta) * sp
+            delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
@@ -270,20 +296,8 @@ class Network(object):
         active_neurons = [rand_bin_array(self.sizes[0],p[0])]
         for i in self.sizes[1:-1]:
             active_neurons.append(rand_bin_array(i,p[1]))
-        active_neurons.append(np.ones(self.sizes[-1]))
-        new_weights = [w*an for w, an in zip(self.weights, active_neurons[:-1])]
-        new_biases = [b*np.array([an]).T for b, an in zip(self.biases, active_neurons[1:])]
-        #print('active neurons:')
-        #print(active_neurons)
-        #print('original weights:')
-        #print(self.weights)
-        #print('new weights:')
-        #print(new_weights)
-        #print('original biases:')
-        #print(self.biases)
-        #print('new biases:')
-        #print(new_biases)
-        return new_weights, new_biases
+        active_neurons.append(rand_bin_array(self.sizes[-1],1.0))
+        return active_neurons
 
     def accuracy(self, data, convert=False):
         """Return the number of inputs in ``data`` for which the neural
@@ -306,7 +320,6 @@ class Network(object):
         representations speeds things up.  More details on the
         representations can be found in
         mnist_loader.load_data_wrapper.
-
         """
         if convert:
             results = [(np.argmax(self.feedforward(x)), np.argmax(y))
@@ -381,4 +394,4 @@ def rand_bin_array(N, p):
     arr = np.zeros(N)
     arr[:K]  = 1   
     np.random.shuffle(arr)
-    return arr
+    return np.array([arr]).T
