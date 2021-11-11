@@ -21,6 +21,7 @@ import decimal
 
 # Third-party libraries
 import numpy as np
+import keyboard
 
 """
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
@@ -28,16 +29,15 @@ training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 net = network2.Network([784,30,10])
 
 net.SGD(training_data, 30, 10, 0.5,
+        early_stopping=False,
+        total_eta_decrease=1,
+        eta_divider=2,
         lmbda = 5.0,
-        p = [1.0, 1.0],
         vel_cof=0.0,
+        p = [1.0, 1.0],
         evaluation_data=validation_data,
         monitor_evaluation_cost=False,
         monitor_evaluation_accuracy=True,
-        stop_n=0,
-        stop_delta=0.0,
-        learning_schedule=0,
-        eta_divider=1024,
         monitor_training_cost=False,
         monitor_training_accuracy=False)
 """
@@ -84,6 +84,40 @@ class CrossEntropyCost(object):
         """
         return (a-y)
 
+class Learning(object):
+    def __init__(self, divider, total_decrease, eta, epochs, stopping_method):
+        if total_decrease>1 and  stopping_method==False: stopping_method='n'
+        self.divider=divider
+        self.total_decrease=total_decrease
+        self.initial_eta=eta
+        self.current_eta=eta
+        if stopping_method=='n': self.last_decrease=1
+        elif stopping_method=='avg': self.last_decrease=epochs+1
+        else: self.last_decrease=0
+        self.check_frequenzy=epochs
+        self.stopping_method=stopping_method
+
+    def resume(self, epoch, evaluation_accuracy):
+        if self.stop(epoch, evaluation_accuracy):
+            return self.update(epoch)
+        else: return True
+
+    def update(self, epoch):
+        if self.current_eta>self.initial_eta/self.total_decrease:
+                self.current_eta/=self.divider
+                print('eta={}'.format(self.current_eta))
+                self.last_decrease=epoch
+                return True
+        else: return False
+
+    def stop(self, epoch, evaluation_accuracy):
+        if epoch>=self.last_decrease+self.check_frequenzy:
+            if self.stopping_method=='n':
+                return max(evaluation_accuracy[-self.check_frequenzy-1])>max(evaluation_accuracy[-self.check_frequenzy:])
+            elif self.stopping_method=='avg':
+                return avg(evaluation_accuracy[-2*self.check_frequenzy:-self.check_frequenzy])>avg(evaluation_accuracy[-self.check_frequenzy:])
+            else: return True
+        else: return False
 
 #### Main Network class
 class Network(object):
@@ -152,18 +186,18 @@ class Network(object):
         return a
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
+            early_stopping=False,
+            total_eta_decrease=1,
+            eta_divider=2, 
             lmbda = 0.0,
-            p = [1.0, 1.0],
             vel_cof=0.0,
+            p = [1.0, 1.0],
             evaluation_data=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
-            stop_n=0,
-            stop_delta=0.0,
-            learning_schedule=0,
-            eta_divider=1024,
             monitor_training_cost=False,
             monitor_training_accuracy=False):
+
         """Train the neural network using mini-batch stochastic gradient
         descent.  The ``training_data`` is a list of tuples ``(x, y)``
         representing the training inputs and the desired outputs.  The
@@ -187,15 +221,17 @@ class Network(object):
         n = len(training_data)
         evaluation_cost, evaluation_accuracy = [], []
         training_cost, training_accuracy = [], []
-        learning_schedule_iteration=0
-        for j in xrange(epochs):
+        j=0
+        learning=Learning(eta_divider, total_eta_decrease, eta, epochs, early_stopping)
+        evaluation_accuracy=[]
+        while learning.resume(j, evaluation_accuracy):
             random.shuffle(training_data)
             mini_batches = [
                 training_data[k:k+mini_batch_size]
                 for k in xrange(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(
-                    mini_batch, eta, lmbda, len(training_data), vel_cof, p)
+                    mini_batch, learning.current_eta, lmbda, len(training_data), vel_cof, p)
             print "Epoch %s training complete" % j
             if monitor_training_cost:
                 cost = self.total_cost(training_data, lmbda)
@@ -214,15 +250,9 @@ class Network(object):
                 accuracy = self.accuracy(evaluation_data)
                 evaluation_accuracy.append(accuracy)
                 print "Accuracy on evaluation data: {} / {}".format(
-                    self.accuracy(evaluation_data), n_data)
-                if stop_n and j>=stop_n:
-                    if evaluation_accuracy[-stop_n-1]>max(evaluation_accuracy[-stop_n:]): 
-                        if learning_schedule==0 or learning_schedule**learning_schedule_iteration>eta_divider: break
-                        else:
-                            eta=eta/learning_schedule
-                            learning_schedule_iteration+=1
-                if stop_delta and j>0:
-                    if max(evaluation_accuracy[:-1])>(1+m.exp(-m.sqrt(j)/stop_delta))*evaluation_accuracy[-1]: break
+                self.accuracy(evaluation_data), n_data)
+            j+=1
+            if keyboard.is_pressed('q'): break
         print
         return evaluation_cost, evaluation_accuracy, max(evaluation_accuracy), \
             training_cost, training_accuracy
@@ -242,7 +272,11 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y, active_neurons)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        
+        #print(nabla_w[1])
+        #print(active_neurons[2])
+        #print(nabla_w[2])
+        #print(nabla_b[1])
+
         self.w_momentums = [vel_cof*wm-(eta/len(mini_batch))*nw
                            for wm, nw in zip(self.w_momentums, nabla_w)]
         self.weights = [(1-eta*(lmbda/n))*w + wm
@@ -295,7 +329,10 @@ class Network(object):
     def dropout(self, p):
         active_neurons = [rand_bin_array(self.sizes[0],p[0])]
         for i in self.sizes[1:-1]:
-            active_neurons.append(rand_bin_array(i,p[1]))
+            #
+            if i==3: active_neurons.append(rand_bin_array(i,0.5))
+            else: active_neurons.append(rand_bin_array(i,p[1]))
+            #
         active_neurons.append(rand_bin_array(self.sizes[-1],1.0))
         return active_neurons
 
@@ -388,6 +425,9 @@ def sigmoid(z):
 def sigmoid_prime(z):
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))
+
+def avg(list):
+    return sum(list)/len(list)
 
 def rand_bin_array(N, p):
     K = int(decimal.Decimal(str(N*p)).quantize(decimal.Decimal('0'), decimal.ROUND_HALF_EVEN))
