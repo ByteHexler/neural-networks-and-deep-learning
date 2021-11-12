@@ -18,6 +18,7 @@ import random
 import sys
 import math as m
 import decimal
+from itertools import izip_longest
 
 # Third-party libraries
 import numpy as np
@@ -113,9 +114,9 @@ class Learning(object):
     def stop(self, epoch, evaluation_accuracy):
         if epoch>=self.last_decrease+self.check_frequenzy:
             if self.stopping_method=='n':
-                return max(evaluation_accuracy[-self.check_frequenzy-1])>max(evaluation_accuracy[-self.check_frequenzy:])
+                return max(evaluation_accuracy[:-self.check_frequenzy])>=max(evaluation_accuracy[-self.check_frequenzy:])
             elif self.stopping_method=='avg':
-                return avg(evaluation_accuracy[-2*self.check_frequenzy:-self.check_frequenzy])>avg(evaluation_accuracy[-self.check_frequenzy:])
+                return avg(evaluation_accuracy[:-self.check_frequenzy])>=avg(evaluation_accuracy[-self.check_frequenzy:])
             else: return True
         else: return False
 
@@ -272,10 +273,6 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y, active_neurons)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        #print(nabla_w[1])
-        #print(active_neurons[2])
-        #print(nabla_w[2])
-        #print(nabla_b[1])
 
         self.w_momentums = [vel_cof*wm-(eta/len(mini_batch))*nw
                            for wm, nw in zip(self.w_momentums, nabla_w)]
@@ -293,20 +290,15 @@ class Network(object):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
-        #print(active_neurons[0])
-        activation = x*active_neurons[0]
-        #print(x.shape==activation.shape)
-        #input='0'
-        #while input=='0': input=raw_input("1 zum fortfahren!")
+        if active_neurons==None: activation = x
+        else: activation = x*active_neurons[0]
         activations = [activation] # list to store all the activations, layer by layer
         zs = [] # list to store all the z vectors, layer by layer
-        for b, w, an in zip(self.biases, self.weights, active_neurons[1:]):
+        for b, w, i in izip_longest(self.biases, self.weights, range(1,self.num_layers-1), fillvalue=False):
             z = np.dot(w, activation)+b
             zs.append(z)
-            activation = sigmoid(z)*an
-            #print(sigmoid(z).shape==activation.shape)
-            #input='0'
-            #while input=='0': input=raw_input("1 zum fortfahren!")
+            if active_neurons==None or i==False: activation = sigmoid(z)
+            else: activation = sigmoid(z)*active_neurons[i]
             activations.append(activation)
         # backward pass
         delta = (self.cost).delta(zs[-1], activations[-1], y)
@@ -320,21 +312,17 @@ class Network(object):
         # that Python can use negative indices in lists.
         for l in xrange(2, self.num_layers):
             z = zs[-l]
-            sp = sigmoid_prime(z)
+            if active_neurons==None: sp = sigmoid_prime(z)
+            else: sp = sigmoid_prime(z)*active_neurons[-l+1]
             delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
-    def dropout(self, p):
-        active_neurons = [rand_bin_array(self.sizes[0],p[0])]
-        for i in self.sizes[1:-1]:
-            #
-            if i==3: active_neurons.append(rand_bin_array(i,0.5))
-            else: active_neurons.append(rand_bin_array(i,p[1]))
-            #
-        active_neurons.append(rand_bin_array(self.sizes[-1],1.0))
-        return active_neurons
+    def dropout(self, dp):
+        if any(p<1 for p in dp): return [np.random.choice([0, 1], size=(i,1), p=[1-p,p]) for i, p in izip_longest(self.sizes[:-1], dp, fillvalue=dp[-1])]#rand_bin_array(self.sizes[0],p[0])]
+            #for i in self.sizes[1:-1]:
+                #rand_bin_array(i,p[1]))
 
     def accuracy(self, data, convert=False):
         """Return the number of inputs in ``data`` for which the neural
@@ -418,7 +406,7 @@ def vectorized_result(j):
     e[j] = 1.0
     return e
 
-def sigmoid(z):
+def sigmoid(z, an=False):
     """The sigmoid function."""
     return 1.0/(1.0+np.exp(-z))
 
