@@ -92,11 +92,11 @@ class Learning(object):
         self.total_decrease=total_decrease
         self.initial_eta=eta
         self.current_eta=eta
-        if stopping_method=='n': self.last_decrease=1
-        elif stopping_method=='avg': self.last_decrease=epochs+1
-        else: self.last_decrease=0
+        if stopping_method==False: self.last_decrease=0
+        else: self.last_decrease=1
         self.check_frequenzy=epochs
         self.stopping_method=stopping_method
+        self.avgs=[]
 
     def resume(self, epoch, evaluation_accuracy):
         if self.stop(epoch, evaluation_accuracy):
@@ -114,9 +114,11 @@ class Learning(object):
     def stop(self, epoch, evaluation_accuracy):
         if epoch>=self.last_decrease+self.check_frequenzy:
             if self.stopping_method=='n':
-                return max(evaluation_accuracy[:-self.check_frequenzy])>=max(evaluation_accuracy[-self.check_frequenzy:])
+                return max(evaluation_accuracy[:-self.check_frequenzy-1])>max(evaluation_accuracy[-self.check_frequenzy:])
             elif self.stopping_method=='avg':
-                return avg(evaluation_accuracy[:-self.check_frequenzy])>=avg(evaluation_accuracy[-self.check_frequenzy:])
+                self.avgs.append(avg(evaluation_accuracy[-self.check_frequenzy:]))
+                if len(self.avgs)>1: return max(self.avgs[:-1])>self.avgs[-1]
+                else: return False
             else: return True
         else: return False
 
