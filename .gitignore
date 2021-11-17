@@ -357,5 +357,3 @@ MigrationBackup/
 .DS_Store
 loc.py
 src/ec2
-
-mnist_loader.py
