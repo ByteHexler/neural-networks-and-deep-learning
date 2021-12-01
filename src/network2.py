@@ -182,10 +182,11 @@ class Network(object):
                         for x, y in zip(self.sizes[:-1], self.sizes[1:])]
         self.w_momentums = [np.zeros(w.shape) for w in self.weights]
 
-    def feedforward(self, a):
+    def feedforward(self, a, p):
         """Return the output of the network if ``a`` is input."""
+        a = a*p[0]                                                    #*p[0] used to adjust for dropout while training
         for b, w in zip(self.biases, self.weights):
-            a = sigmoid(np.dot(w, a)+b)
+            a = sigmoid(np.dot(w, a*p[1])+b)                          #same is true for *p[1]
         return a
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
@@ -237,23 +238,23 @@ class Network(object):
                     mini_batch, learning.current_eta, lmbda, len(training_data), vel_cof, p)
             print "Epoch %s training complete" % j
             if monitor_training_cost:
-                cost = self.total_cost(training_data, lmbda)
+                cost = self.total_cost(training_data, lmbda, p)
                 training_cost.append(cost)
                 print "Cost on training data: {}".format(cost)
             if monitor_training_accuracy:
-                accuracy = self.accuracy(training_data, convert=True)
+                accuracy = self.accuracy(training_data, p, convert=True)
                 training_accuracy.append(accuracy)
                 print "Accuracy on training data: {} / {}".format(
                     accuracy, n)
             if monitor_evaluation_cost:
-                cost = self.total_cost(evaluation_data, lmbda, convert=True)
+                cost = self.total_cost(evaluation_data, lmbda, p, convert=True)
                 evaluation_cost.append(cost)
                 print "Cost on evaluation data: {}".format(cost)
             if monitor_evaluation_accuracy:
-                accuracy = self.accuracy(evaluation_data)
+                accuracy = self.accuracy(evaluation_data, p)
                 evaluation_accuracy.append(accuracy)
                 print "Accuracy on evaluation data: {} / {}".format(
-                self.accuracy(evaluation_data), n_data)
+                self.accuracy(evaluation_data, p), n_data)
             j+=1
             if keyboard.is_pressed('q'): break
         print
@@ -326,7 +327,7 @@ class Network(object):
             #for i in self.sizes[1:-1]:
                 #rand_bin_array(i,p[1]))
 
-    def accuracy(self, data, convert=False):
+    def accuracy(self, data, p, convert=False):
         """Return the number of inputs in ``data`` for which the neural
         network outputs the correct result. The neural network's
         output is assumed to be the index of whichever neuron in the
@@ -349,14 +350,14 @@ class Network(object):
         mnist_loader.load_data_wrapper.
         """
         if convert:
-            results = [(np.argmax(self.feedforward(x)), np.argmax(y))
+            results = [(np.argmax(self.feedforward(x,p)), np.argmax(y))
                        for (x, y) in data]
         else:
-            results = [(np.argmax(self.feedforward(x)), y)
+            results = [(np.argmax(self.feedforward(x,p)), y)
                         for (x, y) in data]
         return sum(int(x == y) for (x, y) in results)
 
-    def total_cost(self, data, lmbda, convert=False):
+    def total_cost(self, data, lmbda, p, convert=False):
         """Return the total cost for the data set ``data``.  The flag
         ``convert`` should be set to False if the data set is the
         training data (the usual case), and to True if the data set is
@@ -365,7 +366,7 @@ class Network(object):
         """
         cost = 0.0
         for x, y in data:
-            a = self.feedforward(x)
+            a = self.feedforward(x,p)
             if convert: y = vectorized_result(y)
             cost += self.cost.fn(a, y)/len(data)
         cost += 0.5*(lmbda/len(data))*sum(
